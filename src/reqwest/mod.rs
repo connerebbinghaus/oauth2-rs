@@ -1,5 +1,8 @@
 use failure::Fail;
 
+mod http_compat;
+
+
 ///
 /// Error type returned by failed reqwest HTTP requests.
 ///
@@ -51,6 +54,8 @@ mod blocking {
     use super::super::{HttpRequest, HttpResponse};
     use super::Error;
 
+    use super::http_compat::*;
+
     #[cfg(all(feature = "reqwest-09", not(feature = "reqwest-010")))]
     use reqwest_0_9 as blocking;
     #[cfg(all(feature = "reqwest-09", not(feature = "reqwest-010")))]
@@ -63,7 +68,7 @@ mod blocking {
     #[cfg(feature = "reqwest-010")]
     use reqwest_0_10::blocking;
     #[cfg(feature = "reqwest-010")]
-    use reqwest_0_10::RedirectPolicy;
+    use reqwest_0_10::redirect::Policy as RedirectPolicy;
 
     use std::io::Read;
 
@@ -76,12 +81,11 @@ mod blocking {
             .redirect(RedirectPolicy::none())
             .build()
             .map_err(Error::Reqwest)?;
-        let mut request_builder = client
-            .request(request.method, request.url.as_str())
-            .body(request.body);
-        for (name, value) in &request.headers {
-            request_builder = request_builder.header(name, value);
-        }
+        let request_builder = client
+            .request(request.method.compat(), request.url.as_str())
+            .body(request.body)
+            .headers(request.headers.compat());
+        
         let mut response = client
             .execute(request_builder.build().map_err(Error::Reqwest)?)
             .map_err(Error::Reqwest)?;
@@ -89,8 +93,8 @@ mod blocking {
         let mut body = Vec::new();
         response.read_to_end(&mut body).map_err(Error::Io)?;
         Ok(HttpResponse {
-            status_code: response.status(),
-            headers: response.headers().clone(),
+            status_code: response.status().compat(),
+            headers: response.headers().clone().compat(),
             body,
         })
     }
@@ -98,8 +102,11 @@ mod blocking {
 
 #[cfg(all(feature = "futures-01", feature = "reqwest-09"))]
 mod future_client {
+    
     use super::super::{HttpRequest, HttpResponse};
     use super::Error;
+
+    use super::http_compat::*;
 
     use futures_0_1::{Future, IntoFuture, Stream};
     use reqwest_0_9 as reqwest;
@@ -118,12 +125,11 @@ mod future_client {
             .map_err(Error::Reqwest)
             .into_future()
             .and_then(|client| {
-                let mut request_builder = client
-                    .request(request.method, request.url.as_str())
-                    .body(request.body);
-                for (name, value) in &request.headers {
-                    request_builder = request_builder.header(name, value);
-                }
+                let request_builder = client
+                    .request(request.method.compat(), request.url.as_str())
+                    .body(request.body)
+                    .headers(request.headers.compat());
+                
                 request_builder
                     .build()
                     .map_err(Error::Reqwest)
@@ -139,8 +145,8 @@ mod future_client {
                                     .map(|chunk| chunk.as_ref().to_vec())
                                     .collect()
                                     .map(move |body| HttpResponse {
-                                        status_code,
-                                        headers,
+                                        status_code: status_code.compat(),
+                                        headers: headers.compat(),
                                         body: body.into_iter().flatten().collect::<_>(),
                                     })
                             })
@@ -152,3 +158,5 @@ mod future_client {
 
 #[cfg(all(feature = "reqwest-010", feature = "futures-03"))]
 mod async_client;
+
+
