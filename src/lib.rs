@@ -485,6 +485,11 @@ use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::time::Duration;
 
+#[cfg(feature="http-0-1")]
+use http_0_1 as http;
+#[cfg(feature="http-0-2")]
+use http_0_2 as http;
+
 use failure::Fail;
 #[cfg(feature = "futures-01")]
 use futures_0_1::{Future, IntoFuture};

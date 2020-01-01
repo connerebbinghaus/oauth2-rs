@@ -1,5 +1,10 @@
 use std::io::Read;
 
+#[cfg(feature="http-0-1")]
+use http_0_1 as http;
+#[cfg(feature="http-0-2")]
+use http_0_2 as http;
+
 use curl::easy::Easy;
 use failure::Fail;
 use http::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
