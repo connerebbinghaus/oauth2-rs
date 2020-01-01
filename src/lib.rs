@@ -486,9 +486,9 @@ use std::marker::PhantomData;
 use std::time::Duration;
 
 #[cfg(feature="http-0-1")]
-pub use http_0_1 as http;
+use http_0_1 as http;
 #[cfg(feature="http-0-2")]
-pub use http_0_2 as http;
+use http_0_2 as http;
 
 use failure::Fail;
 #[cfg(feature = "futures-01")]
