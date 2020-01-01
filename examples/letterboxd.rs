@@ -16,7 +16,7 @@
 use crypto::{hmac, mac::Mac, sha2};
 use hex::ToHex;
 use oauth2::{
-    basic::BasicClient, AuthType, AuthUrl, ClientId, ClientSecret, HttpRequest, HttpResponse,
+    basic::BasicClient, AuthType, AuthUrl, ClientId, ClientSecret, http, HttpRequest, HttpResponse,
     ResourceOwnerPassword, ResourceOwnerUsername, TokenUrl,
 };
 use url::Url;
